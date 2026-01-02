@@ -58,7 +58,7 @@ export const WhoView = () => {
                 <div className="mt-6 space-y-4 animate-fade-in">
                      <ResultBox 
                         title="Z-Skoru" 
-                        value={`${result.z_score?.toFixed(2)}`} 
+                        value={`${result.z_score?.toFixed(2).replace('.', ',')} SD`} 
                         subtext={`${result.age_months.toFixed(1)} Aylık - ${result.type}`}
                         colorClass={Math.abs(result.z_score || 0) > 2 ? 'text-red-600' : 'text-green-600'}
                     />

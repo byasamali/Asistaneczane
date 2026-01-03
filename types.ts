@@ -46,3 +46,11 @@ export interface MfAnalysisResult {
   buy_date_str: string;
   payment_date_str: string;
 }
+
+export interface Product {
+  barcode: string;
+  name: string;
+  psf: number;
+  vat: number;
+  group: string;
+}

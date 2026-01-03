@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { BmiView, BsaView, CalciumView, AlcoholView } from './views/SimpleCalculators';
 import { WhoView } from './views/WhoCalculator';
 import { MfView } from './views/MfCalculator';
-import { LayoutGrid, Calculator, Baby, TrendingUp, FlaskConical, Droplets, Activity, Tag, Smartphone, User, MessageCircle, Home, Info, HeartPulse, ChevronRight } from 'lucide-react';
+import { PsfView } from './views/PsfView';
+import { LayoutGrid, Calculator, Baby, TrendingUp, FlaskConical, Droplets, Activity, Tag, Smartphone, User, MessageCircle, Home, Info, HeartPulse, ChevronRight, Search, ScanBarcode } from 'lucide-react';
 
 enum Tab {
   Home = 'home',
@@ -17,7 +18,8 @@ enum Tool {
   Calcium = 'calc',
   Alcohol = 'alc',
   WHO = 'who',
-  MF = 'mf'
+  MF = 'mf',
+  PSF = 'psf'
 }
 
 const App = () => {
@@ -36,16 +38,17 @@ const App = () => {
                         <LayoutGrid size={18} /> Geri
                     </button>
                     <div className="flex-1 text-center font-heading font-bold text-slate-800 pr-8">
-                        {activeTool === Tool.MF ? 'MF Analizi' : 'Hesapla'}
+                        {activeTool === Tool.MF ? 'MF Analizi' : activeTool === Tool.PSF ? 'Fiyat Gör' : 'Hesapla'}
                     </div>
                 </div>
-                <div className="max-w-md mx-auto">
+                <div className="max-w-md mx-auto h-full">
                     {activeTool === Tool.BMI && <BmiView />}
                     {activeTool === Tool.BSA && <BsaView />}
                     {activeTool === Tool.Calcium && <CalciumView />}
                     {activeTool === Tool.Alcohol && <AlcoholView />}
                     {activeTool === Tool.WHO && <WhoView />}
                     {activeTool === Tool.MF && <MfView />}
+                    {activeTool === Tool.PSF && <PsfView />}
                 </div>
             </div>
         );
@@ -129,11 +132,16 @@ const HomeDashboard = ({ onSelect, setActiveTab }: { onSelect: (t: Tool) => void
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-50">ÖZEL ÇÖZÜM</span>
                     </div>
                     <h2 className="text-4xl font-heading font-black mb-1 leading-none tracking-tight">PRATİKET</h2>
-                    <p className="text-orange-50 text-sm font-semibold opacity-90 mb-2 leading-snug">
-                        Eczaneler için dijital etiketleme sistemi.
+                    <p className="text-orange-50 text-sm font-semibold opacity-90 mb-4 leading-snug">
+                        Pratik ilaç tarif etiket programı.
                     </p>
-                    <div className="inline-block bg-white/30 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-black mb-5 animate-blink">
-                        15 GÜN ÜCRETSİZ DEMO
+                    <div className="flex flex-wrap items-center gap-2 mb-5">
+                         <div className="inline-block bg-white text-orange-600 px-3 py-1.5 rounded-xl text-xs font-black shadow-lg shadow-orange-900/10">
+                            1.500 ₺ / YIL
+                        </div>
+                        <div className="inline-block bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl text-[10px] font-black animate-blink border border-white/10">
+                            15 GÜN ÜCRETSİZ DEMO
+                        </div>
                     </div>
                     <div className="flex flex-col gap-4">
                         <div className="bg-white text-orange-600 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 w-fit">
@@ -154,7 +162,7 @@ const HomeDashboard = ({ onSelect, setActiveTab }: { onSelect: (t: Tool) => void
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <ToolCard icon={<Baby size={28} className="text-rose-500" />} title="WHO Z-Skor" color="bg-rose-50" onClick={() => onSelect(Tool.WHO)} />
-                    <ToolCard icon={<TrendingUp size={28} className="text-indigo-600" />} title="MF Analizi" color="bg-indigo-50" onClick={() => onSelect(Tool.MF)} />
+                    <ToolCard icon={<ScanBarcode size={28} className="text-indigo-600" />} title="Fiyat Gör" color="bg-indigo-50" onClick={() => onSelect(Tool.PSF)} />
                 </div>
             </section>
 
@@ -162,7 +170,7 @@ const HomeDashboard = ({ onSelect, setActiveTab }: { onSelect: (t: Tool) => void
                  <h3 className="text-slate-800 text-lg font-heading font-extrabold tracking-tight mb-5 px-1">En Çok Kullanılanlar</h3>
                  <div className="space-y-4">
                     <ToolRow icon={<Activity className="text-emerald-500" />} title="Vücut Kitle İndeksi" desc="Boy/Kilo Analizi" onClick={() => onSelect(Tool.BMI)} />
-                    <ToolRow icon={<FlaskConical className="text-amber-500" />} title="Alkol Seyreltme" desc="Majistral Reçete" onClick={() => onSelect(Tool.Alcohol)} />
+                    <ToolRow icon={<TrendingUp className="text-teal-600" />} title="MF Stok Analizi" desc="Finansal Karlılık Analizi" onClick={() => onSelect(Tool.MF)} />
                  </div>
             </section>
         </div>
@@ -186,6 +194,7 @@ const CalculatorList = ({ onSelect }: { onSelect: (t: Tool) => void }) => (
         <div>
             <h3 className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] mb-5 ml-1">Eczane & Laboratuvar</h3>
             <div className="space-y-4">
+                <ToolRow icon={<ScanBarcode className="text-purple-600" />} title="Fiyat Gör (PSF)" desc="Google Sheet Veri Tabanı" onClick={() => onSelect(Tool.PSF)} />
                 <ToolRow icon={<FlaskConical className="text-amber-500" />} title="Alkol Seyreltme" desc="Etanol Hazırlama Hesabı" onClick={() => onSelect(Tool.Alcohol)} />
                 <ToolRow icon={<TrendingUp className="text-teal-600" />} title="MF Stok Analizi" desc="Finansal Karlılık Analizi" onClick={() => onSelect(Tool.MF)} />
             </div>

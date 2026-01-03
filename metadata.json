@@ -1,5 +1,7 @@
 {
   "name": "Eczacı Asistanı",
   "description": "Eczacılar için kapsamlı hesaplama araçları: VKİ, BSA, Düzeltilmiş Kalsiyum, Alkol Seyreltme, WHO Z-Skor ve MF (Mal Fazlası) Stok Analizi.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera"
+  ]
 }

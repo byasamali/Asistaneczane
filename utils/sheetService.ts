@@ -9,14 +9,13 @@ function extractSheetInfo(input: string): { sheetId: string, gid: string } {
     
     // ID Ayıklama
     let sheetId = cleanInput;
-    // Eğer tam URL ise regex ile ID'yi al, değilse kendisi ID'dir.
     const idMatch = cleanInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
     if (idMatch) {
         sheetId = idMatch[1];
     }
 
-    // GID Ayıklama (Sadece URL ise vardır)
-    let gid = "";
+    // GID Ayıklama
+    let gid = "0"; // Varsayılan GID 0
     const gidMatch = cleanInput.match(/[?&]gid=([0-9]+)/);
     if (gidMatch) {
         gid = gidMatch[1];
@@ -26,7 +25,46 @@ function extractSheetInfo(input: string): { sheetId: string, gid: string } {
 }
 
 /**
- * Google Sheet'ten veri çeker.
+ * CSV satırını parse eder (Tırnak ve virgül yönetimi)
+ */
+function parseCSVRow(rowText: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < rowText.length; i++) {
+        const char = rowText[i];
+        const nextChar = rowText[i + 1];
+        
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                current += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    result.push(current.trim());
+    return result;
+}
+
+/**
+ * CSV metnini diziye çevirir
+ */
+function parseCSV(text: string): string[][] {
+    // Satırları ayır (CRLF veya LF)
+    const lines = text.split(/\r?\n/);
+    return lines.map(line => parseCSVRow(line)).filter(row => row.length > 0);
+}
+
+/**
+ * Google Sheet'ten veri çeker (CSV formatında)
  * Beklenen sütun sırası: Barkod, Ürün Adı, PSF, KDV, Ürün Grubu
  */
 export async function fetchProductsFromSheet(inputUrl: string): Promise<Product[]> {
@@ -35,66 +73,63 @@ export async function fetchProductsFromSheet(inputUrl: string): Promise<Product[
     
     if (!sheetId) throw new Error("Geçersiz Sheet ID veya Link.");
 
-    // Google Visualization API endpoint
-    // gid parametresi eklenerek doğru sayfa hedeflenir
-    let url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
-    if (gid) {
-        url += `&gid=${gid}`;
-    }
+    // CSV Export endpoint - "Bağlantıya sahip olan herkes" erişimi için daha kararlı
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
     
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Erişim hatası (Kod: ${response.status}). Sheet "Web'de Yayınla" yapılmış mı?`);
+        // Eğer 200 dönmediyse, muhtemelen yetki hatası veya geçersiz ID
+        if (response.status === 401 || response.status === 403) {
+            throw new Error(`Erişim reddedildi. Lütfen dosya paylaşım ayarlarını "Bağlantıya sahip olan herkes görüntüleyen" olarak ayarlayın.`);
+        }
+        throw new Error(`Veri çekilemedi (Hata: ${response.status}). Linki kontrol edin.`);
+    } else {
+        // Bazen Google login sayfasına yönlendirir (200 OK döner ama içerik HTML'dir)
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("text/html")) {
+             throw new Error(`Erişim hatası. Dosya herkese açık paylaşılmamış olabilir.`);
+        }
     }
     
     const text = await response.text();
+    const rows = parseCSV(text);
     
-    // JSONP temizliği: /*O_o*/ ve google.visualization.Query.setResponse(...) kısımlarını temizle
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-    
-    if (start === -1 || end === -1) {
-        throw new Error("Veri formatı hatalı veya Sheet yayınlanmamış.");
-    }
-
-    const jsonText = text.substring(start, end + 1);
-    const json = JSON.parse(jsonText);
-    
-    if (!json.table || !json.table.rows) {
-        return [];
-    }
-
-    const rows = json.table.rows;
     const products: Product[] = [];
 
-    rows.forEach((row: any) => {
-      const c = row.c;
-      if (c && c.length >= 3) {
-         // Hücre boşsa null gelebilir, güvenli erişim sağlayalım
-         const barcode = c[0]?.v ? String(c[0].v).trim() : "";
-         const name = c[1]?.v ? String(c[1].v).trim() : "İsimsiz Ürün";
-         
-         // Fiyat sayısal olmalı
-         let psf = 0;
-         if (c[2]?.v) {
-             if (typeof c[2].v === 'number') psf = c[2].v;
-             else psf = parseFloat(String(c[2].v).replace(',', '.'));
-         }
+    // İlk satır başlık olabilir, kontrol edelim
+    const startIndex = rows.length > 0 && (rows[0][0].toLowerCase().includes('barkod') || rows[0][2].toLowerCase().includes('fiyat')) ? 1 : 0;
 
-         const vat = c[3]?.v ? Number(c[3].v) : 0; 
-         const group = c[4]?.v ? String(c[4].v) : "Genel";
+    for (let i = startIndex; i < rows.length; i++) {
+        const row = rows[i];
+        if (row.length < 3) continue;
 
-         // Başlık satırını atla (Eğer fiyat sayı değilse başlıktır)
-         // Ayrıca barkod ve isim dolu olmalı
-         if (barcode && name && !isNaN(psf)) {
-             products.push({ barcode, name, psf, vat, group });
-         }
-      }
-    });
+        const barcode = row[0];
+        const name = row[1];
+        
+        // Fiyat temizleme (1.234,56 veya 1234.56 formatları)
+        let psfStr = row[2].replace('₺', '').trim();
+        // Virgül ondalık ayracı ise noktaya çevir, binlik ayracı nokta ise kaldır
+        // Basit yaklaşım: Sadece virgülü noktaya çevir
+        if (psfStr.includes(',')) {
+             psfStr = psfStr.replace(',', '.');
+        }
+        const psf = parseFloat(psfStr);
+
+        let vat = 0;
+        if (row.length > 3) {
+            vat = parseFloat(row[3].replace('%', '').replace(',', '.')) || 0;
+        }
+
+        const group = row.length > 4 ? row[4] : "Genel";
+
+        if (barcode && name && !isNaN(psf)) {
+            products.push({ barcode, name, psf, vat, group });
+        }
+    }
 
     return products;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Sheet Fetch Error:", error);
-    throw error;
+    throw new Error(error.message || "Bilinmeyen bir hata oluştu.");
   }
 }

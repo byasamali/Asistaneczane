@@ -84,10 +84,14 @@ export const PsfView = () => {
         setError('');
         try {
             const data = await fetchProductsFromSheet(currentSheetId);
-            setProducts(data);
-        } catch (err) {
+            if (data.length === 0) {
+                setError('Veri bulunamadı. Lütfen sayfa linkini ve paylaşım izinlerini kontrol ediniz.');
+            } else {
+                setProducts(data);
+            }
+        } catch (err: any) {
             console.error(err);
-            setError('Veri çekilemedi. Bağlantı ayarlarını kontrol ediniz.');
+            setError(err.message || 'Veri çekilemedi. Bağlantı ayarlarını kontrol ediniz.');
         } finally {
             setLoading(false);
         }
@@ -186,16 +190,16 @@ export const PsfView = () => {
                     <div className="bg-amber-950/20 p-6 rounded-4xl border border-amber-900/20">
                          <h3 className="flex items-center gap-2 font-heading font-bold text-amber-400 mb-2">
                             <AlertCircle size={20} />
-                            Dikkat
+                            Nasıl Paylaşılır?
                         </h3>
                         <p className="text-xs text-slate-400 leading-relaxed font-medium mb-3">
-                            Verilerinizin çekilebilmesi için Google Sheet dosyanızın web'de yayınlanmış olması gerekir.
+                            Verilerin çekilebilmesi için dosyanın paylaşım ayarlarının açık olması gerekir (Web'de Yayınla yapmanıza gerek yoktur).
                         </p>
                         <div className="bg-amber-900/20 p-3 rounded-xl border border-amber-900/30">
                             <ol className="text-[10px] text-slate-300 space-y-1 list-decimal ml-3">
-                                <li>Dosya &gt; Paylaş &gt; <strong>Web'de Yayınla</strong> seçeneğine gidin.</li>
-                                <li><strong>"Yayınla"</strong> butonuna basın.</li>
-                                <li>Tarayıcıdaki linkin <strong>tamamını</strong> kopyalayıp buraya yapıştırın.</li>
+                                <li>Dosyanızda sağ üstten <strong>Paylaş</strong> butonuna basın.</li>
+                                <li>"Genel Erişim" kısmını <strong>"Bağlantıya sahip olan herkes"</strong> olarak değiştirin.</li>
+                                <li><strong>Bağlantıyı kopyala</strong> diyerek buraya yapıştırın.</li>
                             </ol>
                         </div>
                     </div>
@@ -260,7 +264,7 @@ export const PsfView = () => {
                     </button>
                 </div>
             ) : displayList.length === 0 ? (
-                <div className="text-center mt-12 opacity-30">
+                <div className="text-center mt-12 opacity-30 animate-fade-in">
                     {isShowingFavorites ? (
                         <>
                              {products.length > 0 ? (
@@ -271,7 +275,7 @@ export const PsfView = () => {
                              ) : (
                                 <>
                                     <Star className="w-16 h-16 text-slate-600 mx-auto mb-3" />
-                                    <p className="text-slate-400 font-bold text-sm">Favori listeniz boş.</p>
+                                    <p className="text-slate-400 font-bold text-sm">Veri yüklenemedi veya liste boş.</p>
                                 </>
                              )}
                         </>

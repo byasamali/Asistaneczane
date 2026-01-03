@@ -26,22 +26,22 @@ export const WhoView = () => {
     return (
         <div className="p-4">
              <div className="flex items-center gap-2 mb-6">
-                <div className="p-2 bg-pink-100 rounded-lg"><Baby className="w-6 h-6 text-pink-600" /></div>
-                <h2 className="text-xl font-bold text-slate-800">WHO Z-Skoru (0-19 Yaş)</h2>
+                <div className="p-2 bg-pink-500/10 rounded-lg"><Baby className="w-6 h-6 text-pink-400" /></div>
+                <h2 className="text-xl font-bold text-slate-100">WHO Z-Skoru (0-19 Yaş)</h2>
             </div>
             
-            <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-600 mb-2">Cinsiyet</label>
-                <div className="flex bg-slate-100 p-1 rounded-lg">
+            <div className="mb-6">
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Cinsiyet</label>
+                <div className="flex bg-slate-800 p-1 rounded-2xl border border-slate-700">
                     <button 
                         onClick={() => setGender(Gender.Male)}
-                        className={`flex-1 py-2 rounded-md font-medium transition-all ${gender === Gender.Male ? 'bg-white shadow text-blue-600' : 'text-slate-500'}`}
+                        className={`flex-1 py-3 rounded-xl font-bold transition-all ${gender === Gender.Male ? 'bg-slate-700 shadow-lg text-blue-400' : 'text-slate-500 hover:text-slate-300'}`}
                     >
                         Erkek
                     </button>
                     <button 
                         onClick={() => setGender(Gender.Female)}
-                        className={`flex-1 py-2 rounded-md font-medium transition-all ${gender === Gender.Female ? 'bg-white shadow text-pink-600' : 'text-slate-500'}`}
+                        className={`flex-1 py-3 rounded-xl font-bold transition-all ${gender === Gender.Female ? 'bg-slate-700 shadow-lg text-pink-400' : 'text-slate-500 hover:text-slate-300'}`}
                     >
                         Kız
                     </button>
@@ -60,16 +60,16 @@ export const WhoView = () => {
                         title="Z-Skoru" 
                         value={`${result.z_score?.toFixed(2).replace('.', ',')} SD`} 
                         subtext={`${result.age_months.toFixed(1)} Aylık - ${result.type}`}
-                        colorClass={Math.abs(result.z_score || 0) > 2 ? 'text-red-600' : 'text-green-600'}
+                        colorClass={Math.abs(result.z_score || 0) > 2 ? 'text-rose-400' : 'text-teal-400'}
                     />
-                    <div className="text-sm text-slate-500 text-center">
-                        Ölçüm Değeri: {result.measurement_value}
+                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center bg-slate-800/30 py-2 rounded-xl">
+                        Ölçüm Değeri: <span className="text-slate-300">{result.measurement_value}</span>
                     </div>
                 </div>
             )}
             
             {result && result.error && (
-                <div className="mt-4 p-4 bg-red-50 text-red-600 rounded-lg text-center border border-red-100">
+                <div className="mt-4 p-4 bg-rose-950/20 text-rose-400 rounded-2xl text-center border border-rose-900/20 font-bold">
                     {result.error}
                 </div>
             )}
